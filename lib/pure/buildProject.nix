@@ -22,6 +22,15 @@ let
     && lib.all (part: part != ".." && part != ".") (lib.splitString "/" value);
   assertRelative =
     value: if safeRelative value then value else fail "unsafe relative path ${toString value}";
+  # moon resolves file paths on the filesystem but matches import paths as names, so only file paths drop ".".
+  assertRelativeFile =
+    value:
+    assertRelative (
+      if builtins.isString value then
+        lib.concatStringsSep "/" (builtins.filter (part: part != ".") (lib.splitString "/" value))
+      else
+        value
+    );
   supported =
     target: expr:
     let
@@ -161,9 +170,7 @@ let
       map (
         member:
         let
-          rel = assertRelative (
-            lib.concatStringsSep "/" (builtins.filter (part: part != ".") (lib.splitString "/" member))
-          );
+          rel = assertRelativeFile member;
         in
         if rel == "" then src else src + "/${rel}"
       ) (workspace.members or [ ]);
