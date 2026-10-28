@@ -114,8 +114,10 @@ moon-nix.buildProject {
 
 Declared applications are in =PATH= and their binaries are also available through
 =$mooncake_bin=. =$mod_dir=, =$pkg_dir=, =$input= and =$output= are expanded;
-=:embed= invokes =moon tool embed=. Legacy =pre-build= paths are relative to
-the package; =dev_build= paths are relative to the module. Outputs must belong
+=:embed= invokes =moon tool embed=. Legacy =pre-build= and =dev_build= paths are
+relative to the package, and =..= may reach files elsewhere in the module.
+Legacy =pre-build= commands run in the package directory and =dev_build= commands
+run in the module directory. Outputs must belong
 to the package that declares the rule. Rules run in a writable source copy and
 only declared outputs are passed onward. Output/input edges order chained rules;
 duplicate outputs and cycles fail during planning.

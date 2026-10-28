@@ -11,14 +11,26 @@ let
   inherit (pkgs) lib;
   fail = message: throw "moon-nix prebuild ${package.fqn}: ${message}";
   asList = value: if builtins.isList value then value else [ value ];
-  safePath =
-    path:
-    builtins.isString path
-    && path != ""
-    && !lib.hasPrefix "/" path
-    && lib.all (p: p != ".." && p != "." && p != "") (lib.splitString "/" path);
   pkgRel = lib.removePrefix (toString package.module.source + "/") (toString package.directory);
   prefix = if toString package.directory == toString package.module.source then "" else pkgRel + "/";
+  # moon resolves rule paths against the package and lets `..` reach other parts of the module.
+  modulePath =
+    path:
+    let
+      parts = lib.foldl' (
+        acc: part:
+        if part == "" || part == "." then
+          acc
+        else if part == ".." then
+          if acc == [ ] then fail "path ${path} leaves the module" else lib.init acc
+        else
+          acc ++ [ part ]
+      ) [ ] (lib.splitString "/" (prefix + path));
+    in
+    if !builtins.isString path || path == "" || lib.hasPrefix "/" path || parts == [ ] then
+      fail "invalid path ${toString path}"
+    else
+      lib.concatStringsSep "/" parts;
   namedRules = asList (package.module.raw.rule or [ ]) ++ asList (package.raw.rule or [ ]);
   names = builtins.listToAttrs (
     map (r: {
@@ -29,9 +41,7 @@ let
   lower =
     legacy: rule:
     let
-      base = if legacy then prefix else "";
-      paths =
-        value: map (p: if safePath p then base + p else fail "invalid path ${toString p}") (asList value);
+      paths = value: map modulePath (asList value);
       inputs = paths (rule.input or [ ]);
       outputs = paths (rule.output or [ ]);
       command = rule.command or (names.${rule.rule} or (fail "unknown rule ${rule.rule}"));
