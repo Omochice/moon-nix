@@ -259,6 +259,12 @@ let
     cArchives =
       builtins.length (builtins.attrNames cProject.actions.cStubs) == 3
       && builtins.length cProject.actions.cStubs."test/cstub@local|lib".objects == 2;
+    pkgtypeMain =
+      builtins.length
+        (api.buildProject {
+          src = ./fixtures/pkgtype;
+          mainPackage = "test/pkgtype/main";
+        }).passthru.plan.order == 1;
     invalidVersion = rejected (resolver.semver "01.0.0");
     missingVersion = rejected (resolver.resolve { root.deps.x = "1.0.0"; });
     invalidSyntax = rejected (api.parseManifest "package" ''import { "x" as }'');

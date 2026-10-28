@@ -357,6 +357,8 @@ let
                 file
             ) declaredStubs
           );
+      # `moon fmt` rewrites `is-main` into `pkgtype(kind: "executable")`, so both spellings occur.
+      isMain = raw.is-main or false || (raw.pkgtype.kind or null) == "executable";
       isVirtual = raw ? virtual;
       hasDefault =
         if !isVirtual then
@@ -425,6 +427,7 @@ let
           stubs
           prebuild
           generatedSources
+          isMain
           isVirtual
           hasDefault
           mbti
@@ -582,7 +585,7 @@ let
             "-pkg"
             p.fqn
           ]
-          ++ lib.optional (p.raw.is-main or false) "-is-main"
+          ++ lib.optional p.isMain "-is-main"
           ++ lib.optional p.isVirtual "-no-mi"
           ++ lib.optionals (p.isVirtual || p.implements != null) [
             "-check-mi"
@@ -877,7 +880,7 @@ if
   ]
 then
   fail "unsupported backend ${target}"
-else if !(mainNode.raw.is-main or false) then
+else if !mainNode.isMain then
   fail "${mainPackage} must declare is-main"
 else if builtins.match "[a-zA-Z0-9_][a-zA-Z0-9_.-]*" outputStem == null then
   fail "unsafe bin-name"
