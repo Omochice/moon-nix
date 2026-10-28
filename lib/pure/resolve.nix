@@ -102,8 +102,10 @@ let
             fail "${name}: expected registry version";
       }) specs;
   registryReader =
-    registry: name:
+    input: name:
     let
+      # A `flake = false` input is an attrset carrying `outPath`, not an in-memory registry.
+      registry = if builtins.isAttrs input && input ? outPath then input.outPath else input;
       file = if builtins.isAttrs registry then null else registry + "/user/${name}.index";
       records =
         if file != null && builtins.pathExists file then

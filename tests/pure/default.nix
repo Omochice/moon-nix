@@ -156,6 +156,11 @@ let
         root.deps."test/lib" = "0.1.0";
         registry = ./fixtures/index;
       }).selected."test/lib" == [ "0.1.0" ];
+    flakeInputRegistry =
+      (resolver.resolve {
+        root.deps."test/lib" = "0.1.0";
+        registry.outPath = "${./fixtures/index}";
+      }).selected."test/lib" == [ "0.1.0" ];
     fetchedSource =
       builtins.length
         (api.buildProject {
