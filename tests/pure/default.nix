@@ -139,12 +139,7 @@ let
             command = ''echo "hi"'';
           }
         ];
-    multipleVersions =
-      resolved.selected."test/lib" == [
-        "0.1.0"
-        "2.0.0"
-      ]
-      && resolved.modules."test/bridge@1.0.0".edges."test/lib" == "test/lib@2.0.0";
+    conflictingVersions = rejected resolved;
     minimumVersion = upgraded.selected.c == [ "1.1.0" ];
     compatible01 = resolver.satisfies "0.1.0" "1.0.0" && !resolver.satisfies "1.0.0" "2.0.0";
     semver =
@@ -162,25 +157,25 @@ let
         registry.outPath = "${./fixtures/index}";
       }).selected."test/lib" == [ "0.1.0" ];
     fetchedSource =
-      builtins.length
-        (api.buildProject {
-          src = ./fixtures/app;
-          mainPackage = "test/app/main";
-          registry = registry // {
-            "test/lib" = registry."test/lib" // {
-              "0.1.0" = {
-                url = "file://${./fixtures/lib-old.tar.gz}";
-                narHash = "sha256-plDHh7RxcPVArDAR/a8lgh0qKraes91QeEKwJq+C1VY=";
-              };
+      (builtins.fromJSON (
+        builtins.readFile (
+          (import ../../lib/pure/fetchSource.nix { inherit pkgs; }) { } {
+            name = "test/lib";
+            version = "0.1.0";
+            entry = {
+              url = "file://${./fixtures/lib-old.tar.gz}";
+              narHash = "sha256-plDHh7RxcPVArDAR/a8lgh0qKraes91QeEKwJq+C1VY=";
             };
-          };
-        }).passthru.plan.order == 4;
+          }
+          + "/moon.mod.json"
+        )
+      )).version == "0.1.0";
     wrongSource = rejected (
       api.buildProject {
         src = ./fixtures/app;
         mainPackage = "test/app/main";
         inherit registry;
-        sources."test/lib@0.1.0" = ./fixtures/lib-new;
+        sources."test/lib@2.0.0" = ./fixtures/lib-old;
       }
     );
     undeclaredImport = rejected (
@@ -281,7 +276,8 @@ let
       }
     );
     graph =
-      builtins.length (project "wasm-gc").passthru.plan.order == 4
+      builtins.length (project "wasm-gc").passthru.plan.order == 3
+      && (project "wasm-gc").passthru.plan.packages."test/lib@2.0.0|".fqn == "test/lib"
       && (project "wasm-gc").passthru.plan.packages."test/app@0.1.0|main".files == [ "main.mbt" ];
     jsFiles =
       (project "js").passthru.plan.packages."test/app@0.1.0|main".files == [
@@ -378,22 +374,22 @@ in
   '';
   registry-source = pkgs.runCommand "moon-nix-registry-source-test" { } ''
     ${archiveProject}/bin/main > result
-    test "$(cat result)" = 3
+    test "$(cat result)" = 4
     cp result $out
   '';
   wasm = pkgs.runCommand "moon-nix-pure-wasm-test" { nativeBuildInputs = [ toolchain ]; } ''
     moonrun ${project "wasm-gc"}/bin/main.wasm > result
-    test "$(cat result)" = 3
+    test "$(cat result)" = 4
     cp result $out
   '';
   js = pkgs.runCommand "moon-nix-pure-js-test" { nativeBuildInputs = [ pkgs.nodejs ]; } ''
     node ${project "js"}/bin/main.js > result
-    test "$(cat result)" = 3
+    test "$(cat result)" = 4
     cp result $out
   '';
   native = pkgs.runCommand "moon-nix-pure-native-test" { } ''
     ${project "native"}/bin/main > result
-    test "$(cat result)" = 3
+    test "$(cat result)" = 4
     cp result $out
   '';
 }

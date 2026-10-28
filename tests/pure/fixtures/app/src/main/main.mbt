@@ -1,1 +1,1 @@
-fn main { println(@old.value() + @bridge.value()) }
+fn main { println(@lib.value() + @bridge.value()) }

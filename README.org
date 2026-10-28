@@ -62,8 +62,8 @@ The =registry= argument can also be an attrset keyed by module name and version,
 with =deps= and =checksum= / optional =url= in each record.
 
 Implemented: DSL =moon.mod=/=moon.pkg= and strict JSON manifests; source-directory
-options; Moon MVS with separate 0/1 and >=2 compatibility groups; version-specific
-import edges and compiler package names; aliases; backend-conditional imports;
+options; Moon MVS with separate 0/1 and >=2 compatibility groups, failing like
+Moon when one module is selected in two groups; aliases; backend-conditional imports;
 release-mode target conditions and filename suffixes; compile/link flags;
 diagnostics; bin-name; package cycle errors; transitive interface listings for
 re-exports. Only reachable packages are read. Compiler inputs are filtered per
@@ -173,9 +173,9 @@ nix build --no-link --option allow-import-from-derivation false \
   .#checks.x86_64-linux.virtual
 #+end_src
 
-The compiler fixtures link two incompatible versions of one module and consume
-a transitive =pub using= re-export; wasm-gc, JS and native must print =3=.
-The registry check reads real-format JSON-lines indexes and fetches three ZIPs
+The compiler fixtures share one module between the root and a dependency and
+consume a transitive =pub using= re-export; wasm-gc, JS and native must print =4=.
+The registry check reads real-format JSON-lines indexes and fetches two ZIPs
 using only their checksums and the download base URL. The C test prints =43=
 using four C objects across three packages, nested headers and cross-archive
 references. Workspace and chained prebuild tests print =42=, including generated

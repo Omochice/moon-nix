@@ -257,9 +257,7 @@ let
     {
       key = "${moduleKey}|${rel}";
       inherit moduleKey rel;
-      fqn =
-        (if moduleMap.${moduleKey}.local then owner else moduleKey)
-        + lib.optionalString (rel != "") "/${rel}";
+      fqn = owner + lib.optionalString (rel != "") "/${rel}";
     };
   importSpec =
     x:
@@ -644,8 +642,7 @@ let
         }) transitive
       );
       packages = map (d: {
-        root =
-          if graph.nodes.${d}.module.local then graph.nodes.${d}.module.name else graph.nodes.${d}.moduleKey;
+        root = graph.nodes.${d}.module.name;
         rel = graph.nodes.${d}.rel;
         artifact = interface d;
       }) transitive;
@@ -676,7 +673,7 @@ let
         ;
       sources = lib.optional (!generated) source;
       packages = map (d: {
-        root = if nodes.${d}.module.local then nodes.${d}.module.name else nodes.${d}.moduleKey;
+        root = nodes.${d}.module.name;
         rel = nodes.${d}.rel;
         artifact = interface d;
       }) transitive;

@@ -181,17 +181,26 @@ let
           visited = { };
           gathered = { };
         }).gathered;
+      # moon rejects this graph too: compiler package names carry no version, so two copies would collide.
+      single =
+        name: versions:
+        if builtins.length versions == 1 then
+          versions
+        else
+          fail "conflicting versions of ${name}: ${lib.concatStringsSep ", " versions}";
       selected = lib.mapAttrs (
-        _: versions:
-        builtins.attrValues (
-          lib.foldl' (
-            sets: version:
-            let
-              g = group version;
-              previous = sets.${g} or version;
-            in
-            sets // { ${g} = if versionCompare version previous > 0 then version else previous; }
-          ) { } versions
+        name: versions:
+        single name (
+          builtins.attrValues (
+            lib.foldl' (
+              sets: version:
+              let
+                g = group version;
+                previous = sets.${g} or version;
+              in
+              sets // { ${g} = if versionCompare version previous > 0 then version else previous; }
+            ) { } versions
+          )
         )
       ) gathered;
       select =
