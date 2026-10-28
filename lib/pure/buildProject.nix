@@ -23,14 +23,13 @@ let
   assertRelative =
     value: if safeRelative value then value else fail "unsafe relative path ${toString value}";
   # moon resolves file paths on the filesystem but matches import paths as names, so only file paths drop ".".
-  assertRelativeFile =
+  relativeFile =
     value:
-    assertRelative (
-      if builtins.isString value then
-        lib.concatStringsSep "/" (builtins.filter (part: part != ".") (lib.splitString "/" value))
-      else
-        value
-    );
+    if builtins.isString value then
+      lib.concatStringsSep "/" (builtins.filter (part: part != ".") (lib.splitString "/" value))
+    else
+      value;
+  assertRelativeFile = value: assertRelative (relativeFile value);
   supported =
     target: expr:
     let
@@ -239,7 +238,7 @@ let
   scanRoot =
     m:
     let
-      sub = assertRelative (m.raw.source or "");
+      sub = assertRelativeFile (m.raw.source or "");
     in
     m.source + lib.optionalString (sub != "") "/${sub}";
   locate =
@@ -344,15 +343,20 @@ let
         else if !builtins.isList declaredStubs then
           fail "${node.fqn}: native-stub must be a list"
         else
-          map (
-            file:
-            if !builtins.isString file || !safeRelative file || file == "" then
-              fail "${node.fqn}: invalid stub path"
-            else if !builtins.elem file generatedFiles && !builtins.pathExists (directory + "/${file}") then
-              fail "${node.fqn}: missing C stub ${file}"
-            else
-              file
-          ) (lib.unique declaredStubs);
+          lib.unique (
+            map (
+              declared:
+              let
+                file = relativeFile declared;
+              in
+              if !builtins.isString file || !safeRelative file || file == "" then
+                fail "${node.fqn}: invalid stub path"
+              else if !builtins.elem file generatedFiles && !builtins.pathExists (directory + "/${file}") then
+                fail "${node.fqn}: missing C stub ${file}"
+              else
+                file
+            ) declaredStubs
+          );
       isVirtual = raw ? virtual;
       hasDefault =
         if !isVirtual then
