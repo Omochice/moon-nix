@@ -204,6 +204,12 @@ let
     workspace =
       builtins.length (workspaceProject "wasm-gc").plan.order == 3
       && !(workspaceProject "wasm-gc").plan.resolution.selected ? "work/shared";
+    workspaceDotMember =
+      builtins.length
+        (api.buildProject {
+          src = ./fixtures/dot-member;
+          mainPackage = "test/dot/main";
+        }).plan.order == 1;
     prebuildChain =
       builtins.length (workspaceProject "wasm-gc").actions.prebuild."work/app@0.1.0|main" == 2;
     prebuildCycle = rejected (prebuildRules [

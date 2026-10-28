@@ -158,9 +158,15 @@ let
     if workspace == null then
       [ src ]
     else
-      map (member: src + "/${if member == "." then "" else assertRelative member}") (
-        workspace.members or [ ]
-      );
+      map (
+        member:
+        let
+          rel = assertRelative (
+            lib.concatStringsSep "/" (builtins.filter (part: part != ".") (lib.splitString "/" member))
+          );
+        in
+        if rel == "" then src else src + "/${rel}"
+      ) (workspace.members or [ ]);
   localList = map (
     source:
     let
