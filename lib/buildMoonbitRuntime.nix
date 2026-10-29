@@ -1,9 +1,13 @@
 # Compile the MoonBit native runtime sources (`lib/runtime/*.c`) into
-# `runtime.o`, once per native executable. The C compiler comes from `stdenv`
+# `libruntime.a`, once per native executable. The C compiler comes from `stdenv`
 # (`$CC` — the nixpkgs cc-wrapper, which resolves crt/libc correctly), the sources
 # and headers from the `toolchain`.
 #
-#   moon-nix.buildMoonbitRuntime { toolchain = …; }   # → $out/runtime.o
+# An archive rather than one relocatable object, as moon does: newer toolchains
+# ship runtime sources such as `thread_pool.c` that moonbitlang/async also
+# carries as a C stub, and only an archive lets the link leave the unused copy out.
+#
+#   moon-nix.buildMoonbitRuntime { toolchain = …; }   # → $out/libruntime.a
 { stdenv }:
 {
   pname ? "moonbit-runtime",
@@ -22,7 +26,7 @@ stdenv.mkDerivation {
         -fwrapv -fno-strict-aliasing -O2 \
         -DMOONBIT_ALLOW_STACKTRACE -DMOONBIT_USE_SIMDUTF "$source"
     done
-    $CC -r -o $out/runtime.o ./*.o
+    $AR rcs $out/libruntime.a ./*.o
     runHook postBuild
   '';
 }

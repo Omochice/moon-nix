@@ -6,7 +6,7 @@
 #   moon-nix.makeMoonbitExecutable {
 #     pname    = "a_b";
 #     programC = cDrv;        # linkMoonbitProgram { target = "native"; } → $out/a_b.c
-#     runtime  = runtimeDrv;  # buildMoonbitRuntime → $out/runtime.o
+#     runtime  = runtimeDrv;  # buildMoonbitRuntime → $out/libruntime.a
 #     stubArchives = [ ];     # [ { drv = …; name = "lib<pkg>.a"; } ] (C-FFI packages)
 #     pkgConfig = [ "zlib" ]; # native deps from `options("pkg-config")` — `--libs`
 #     buildInputs = [ pkgs.zlib ];  # the corresponding nixpkgs libraries
@@ -50,8 +50,9 @@ stdenv.mkDerivation {
     mkdir -p $out
     export HOME=$TMPDIR
     $CC -o $out/${pname} -I${toolchain}/include -g -fwrapv -fno-strict-aliasing -Og \
-      ${programC}/${pname}.c ${runtime}/runtime.o \
+      ${programC}/${pname}.c \
       ${lib.escapeShellArgs stubArgs} \
+      ${runtime}/libruntime.a \
       ${pkgCfgLibs} \
       ${tailObjs}
     runHook postBuild
