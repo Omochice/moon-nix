@@ -25,8 +25,8 @@ stdenv.mkDerivation {
   buildPhase = ''
     runHook preBuild
     mkdir -p $out
-    ${clang}/bin/clang -o $out/${pname}.o -I${toolchain}/include -g -c \
-      -fwrapv -fno-strict-aliasing -Og \
+    ${clang}/bin/clang -o $out/${pname}.o -I${toolchain}/include -c \
+      -fwrapv -fno-strict-aliasing -ffp-contract=off -Wno-unused-value -O2 \
       -x ${if cpp then "objective-c++" else "objective-c"} ${stub}
     runHook postBuild
   '';

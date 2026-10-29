@@ -37,7 +37,7 @@ let
   pkgCfgLibs = lib.optionalString (
     pkgConfig != [ ]
   ) "$(pkg-config --libs ${lib.escapeShellArgs pkgConfig})";
-  tailObjs = "${toolchain}/lib/moonbit_simdutf.o ${toolchain}/lib/simdutf.o -lm ${toolchain}/lib/libbacktrace.a";
+  tailObjs = "${toolchain}/lib/libmoonbitrun.o ${toolchain}/lib/moonbit_simdutf.o ${toolchain}/lib/simdutf.o -lm ${toolchain}/lib/libbacktrace.a";
 in
 stdenv.mkDerivation {
   name = pname;
@@ -49,7 +49,8 @@ stdenv.mkDerivation {
     runHook preBuild
     mkdir -p $out
     export HOME=$TMPDIR
-    $CC -o $out/${pname} -I${toolchain}/include -g -fwrapv -fno-strict-aliasing -Og \
+    $CC -o $out/${pname} -I${toolchain}/include -fwrapv -fno-strict-aliasing \
+      -ffp-contract=off -Wno-unused-value -O2 -DMOONBIT_ALLOCATOR=MOONBIT_ALLOCATOR_MIMALLOC \
       ${programC}/${pname}.c \
       ${lib.escapeShellArgs stubArgs} \
       ${runtime}/libruntime.a \

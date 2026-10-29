@@ -35,8 +35,8 @@ stdenv.mkDerivation {
     runHook preBuild
     mkdir -p $out
     export HOME=$TMPDIR
-    $CC -o $out/${pname}.o -I${toolchain}/include -g -x c -c -fwrapv -fno-strict-aliasing \
-      -Og ${
+    $CC -o $out/${pname}.o -I${toolchain}/include -x c -c -fwrapv -fno-strict-aliasing \
+      -ffp-contract=off -Wno-unused-value -O2 ${
         lib.escapeShellArgs (map (dir: "-I${dir}") includeDirs)
       } ${pkgCfgCflags} ${lib.escapeShellArg (toString stub)}
     runHook postBuild

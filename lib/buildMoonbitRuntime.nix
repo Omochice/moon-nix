@@ -23,8 +23,8 @@ stdenv.mkDerivation {
     export HOME=$TMPDIR
     for source in ${toolchain}/lib/runtime/*.c; do
       $CC -o "$(basename "$source" .c).o" -I${toolchain}/include -g -c \
-        -fwrapv -fno-strict-aliasing -O2 \
-        -DMOONBIT_ALLOW_STACKTRACE -DMOONBIT_USE_SIMDUTF "$source"
+        -fwrapv -fno-strict-aliasing -ffp-contract=off -Wno-unused-value -O2 \
+        -DMOONBIT_USE_SIMDUTF -DMOONBIT_ALLOCATOR=MOONBIT_ALLOCATOR_MIMALLOC "$source"
     done
     $AR rcs $out/libruntime.a ./*.o
     runHook postBuild
